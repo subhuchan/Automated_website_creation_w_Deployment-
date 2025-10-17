@@ -41,6 +41,9 @@ def process_request(data):
     saved_attachments = decode_attachments(attachments)
     print("Attachments saved:", saved_attachments)
 
+    # Step 1: Get or create repo (needed for round 2 README fetch)
+    repo = create_repo(task_id, description=f"Auto-generated app for task: {data['brief']}")
+
     # Optional: fetch previous README for round 2
     prev_readme = None
     if round_num == 2:
@@ -61,9 +64,6 @@ def process_request(data):
 
     files = gen.get("files", {})
     saved_info = gen.get("attachments", [])
-
-    # Step 1: Get or create repo
-    repo = create_repo(task_id, description=f"Auto-generated app for task: {data['brief']}")
 
     # Step 2: Round-specific logic
     if round_num == 1:
