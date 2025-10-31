@@ -2,7 +2,6 @@ from fastapi import FastAPI, Request, BackgroundTasks, WebSocket, WebSocketDisco
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
-from contextlib import asynccontextmanager
 import os
 
 from .core.config import settings
@@ -10,21 +9,16 @@ from .core.database import init_db, get_db
 from .api.v1 import api as api_v1
 from .websockets.manager import manager
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    print("🚀 Initializing database...")
-    init_db()
-    print("✅ Database initialized")
-    yield
-    # Shutdown
-    print("👋 Shutting down...")
-
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    version=settings.VERSION,
-    lifespan=lifespan
+    version=settings.VERSION
 )
+
+# Initialize database on startup (for serverless)
+try:
+    init_db()
+except Exception as e:
+    print(f"⚠️ Database init warning: {e}")
 
 # CORS
 app.add_middleware(
@@ -38,27 +32,26 @@ app.add_middleware(
 # Include API routes
 app.include_router(api_v1.router, prefix=settings.API_V1_STR)
 
-# WebSocket endpoint
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            # Handle subscription requests
-            import json
-            try:
-                msg = json.loads(data)
-                if msg.get("type") == "subscribe" and msg.get("task_id"):
-                    await manager.subscribe_to_project(websocket, msg["task_id"])
-                    await websocket.send_text(json.dumps({
-                        "type": "subscribed",
-                        "task_id": msg["task_id"]
-                    }))
-            except:
-                pass
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
+# WebSocket endpoint (disabled for Vercel serverless)
+# @app.websocket("/ws")
+# async def websocket_endpoint(websocket: WebSocket):
+#     await manager.connect(websocket)
+#     try:
+#         while True:
+#             data = await websocket.receive_text()
+#             import json
+#             try:
+#                 msg = json.loads(data)
+#                 if msg.get("type") == "subscribe" and msg.get("task_id"):
+#                     await manager.subscribe_to_project(websocket, msg["task_id"])
+#                     await websocket.send_text(json.dumps({
+#                         "type": "subscribed",
+#                         "task_id": msg["task_id"]
+#                     }))
+#             except:
+#                 pass
+#     except WebSocketDisconnect:
+#         manager.disconnect(websocket)
 
 # Legacy endpoint for backward compatibility
 from .api.v1.endpoints.builder import process_request_legacy
@@ -189,6 +182,3 @@ async def health_check():
         "github_configured": bool(settings.GITHUB_TOKEN),
         "gemini_configured": bool(settings.GEMINI_API_KEY)
     }
-
-# Vercel serverless handler
-handler = app
