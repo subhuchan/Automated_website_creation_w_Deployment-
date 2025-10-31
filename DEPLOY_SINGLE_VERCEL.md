@@ -120,7 +120,7 @@ Railway is better suited for full-stack apps with databases. Here's how:
 
 ### Step 1: Go to Railway
 
-1. Open [railway.app](https://railway.app)
+1. Open [railway.app](https ://railway.app)
 2. Sign up with GitHub
 3. Click **"New Project"**
 
