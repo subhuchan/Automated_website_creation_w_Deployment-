@@ -189,3 +189,6 @@ async def health_check():
         "github_configured": bool(settings.GITHUB_TOKEN),
         "gemini_configured": bool(settings.GEMINI_API_KEY)
     }
+
+# Vercel serverless handler
+handler = app

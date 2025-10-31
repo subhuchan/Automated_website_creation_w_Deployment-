@@ -34,8 +34,8 @@ class Settings(BaseSettings):
     # CORS
     BACKEND_CORS_ORIGINS: list = ["http://localhost:5173", "http://localhost:3000"]
     
-    # Database
-    DATABASE_URL: str = "sqlite:///./tds_projects.db"
+    # Database (use /tmp for Vercel serverless)
+    DATABASE_URL: str = "sqlite:////tmp/tds_projects.db"
     
     # GitHub
     GITHUB_TOKEN: str = ""
